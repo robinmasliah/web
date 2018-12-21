@@ -1,0 +1,159 @@
+TP8 données du web
+ROBIN MASLIAH
+
+
+1. Trouver les types de données présents dans data.bnf
+------------------------------------------------------
+
+Quels sont les cinq types qui apparaissent les plus représentatifs du contenu de la
+base?
+
+requête:	select ?t (count( ?h) as ?c) where { ?h a ?t } Group
+		by ?t order by ?c
+
+résultat :
+
+http://rdvocab.info/uri/schema/FRBRentitiesRDA/Work 		654078
+http://xmlns.com/foaf/0.1/Person 				1783586
+http://rdvocab.info/uri/schema/FRBRentitiesRDA/Expression 	9457085
+http://rdvocab.info/uri/schema/FRBRentitiesRDA/Manifestation 	9457085
+http://www.w3.org/2004/02/skos/core#Concept 			12589525
+
+Tentez d’expliquer la construction de la requête :
+
+On sélectionne les types en comptant les sujets (compteur dans variable ?c ) qui correspondent aux types groupés par sujets et ordonné par compteur croissant.
+
+
+2. Trouver des personnes, les compter, trouver les propriétés qui
+les décrivent
+-----------------------------------------------------------------
+
+Cherchez la valeur du préfixe foaf : et donnez la version développée du type
+foaf:Person :
+
+requête :
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+select DISTINCT (count( ?h) as ?c) where { ?h a foaf:Person }
+
+résultat :
+
+c
+1783586
+
+
+select distinct ?h where { ?h a foaf:Person } LIMIT 10 OFFSET 100
+Vous pouvez cliquer sur les URI obtenues pour le résultat en format HTML :
+qu’est-ce que cela donne ?
+
+
+requête :
+
+select distinct ?h where { ?h a foaf:Person } LIMIT 10 OFFSET 100
+ 
+résultat :
+
+h
+http://data.bnf.fr/ark:/12148/cb103571209#about
+http://data.bnf.fr/ark:/12148/cb10357715c#about
+http://data.bnf.fr/ark:/12148/cb103580130#about
+http://data.bnf.fr/ark:/12148/cb103597286#about
+http://data.bnf.fr/ark:/12148/cb10361065r#about
+http://data.bnf.fr/ark:/12148/cb103622677#about
+http://data.bnf.fr/ark:/12148/cb10363117n#about
+http://data.bnf.fr/ark:/12148/cb103646298#about
+http://data.bnf.fr/ark:/12148/cb103663931#about
+http://data.bnf.fr/ark:/12148/cb10366491m#about
+
+Chaque lien renvoie vers une page d'une personne qui semble être un auteur sans doute dont l'oeuvre est archivée à la BNF.
+
+On sélectionne les sujets qui correspondent au type Person.
+
+
+select (count (distinct ?p) as ?c) where {
+?h a foaf:Person; ?p [ ]
+}
+
+c
+26
+
+
+Au vu de ce que vous obtenez, expliquez pourquoi il est intéressant de rendre
+une URI déréférençable ?
+
+Une consigne de base : mettre le plus possible d’URIs déréférençables dans les triples, pour faciliter la navigation dans le Web des données.
+
+combien de ‘faits’ sont disponibles au sujet de cette personne ? quelles sont les deux
+grandes parties de la description ? quelle est l’année de naissance la personne?
+
+
+* Le document contient 295 fait sur la personne.
+
+* Le document contient les liens vers les descriptions des faits et les subjects/item.
+
+* La date de naissance est : 1789-07-28
+
+
+Regardez ce que la requête donne avec un résultat en JSON. Commentez ce que
+vous pourriez faire de ce résultat en Python. Cliquez sur ‘Url de la requête’ et
+copiez cette URL.
+
+* En obtenant le résultat en JSON on peut l'extraire en python est scrapper le résultat, le stocker dans des dictionnaires pour traiter la données etc...
+
+URL de la requête : describe ?h where { ?h a foaf:Person } LIMIT 1 OFFSET 100
+
+http://data.bnf.fr/sparql?default-graph-uri=&query=%23select+distinct+%3Ft+where+%7B+%3Fh+a+%3Ft+%7D%0D%0A%0D%0A%23select+%3Ft+%28count%28+%3Fh%29+as+%3Fc%29+where+%7B+%3Fh+a+%3Ft+%7D+Group%0D%0A%23by+%3Ft+order+by+%3Fc%0D%0A%0D%0Adescribe+%3Fh+where+%7B+%3Fh+a+foaf%3APerson+%7D+LIMIT+1+OFFSET+100%0D%0A%0D%0A%23select+%3Ft+%28count%28+%3Fh%29+as+%3Fc%29+where+%7B+%3Fh+a+%3Ft+%7D+Group%0D%0A%23by+%3Ft+order+by+%3Fc&format=text%2Fhtml&timeout=0&should-sponge=&debug=on
+
+Regardez ce que donne la requête au format NTriples. Pouvez-vous interpréter
+ce que vous voyez ?
+Même démarche au format CSV ou TSV. Qu’y a-t-il de particulier ?
+
+* Le format NTriples renvoie sujet prédicat objet.
+
+* Le format CSV permet de parser le document en 3 colonnes sujet prédicat objet avec des séparateur. ON peut ainsi télécharger les données.
+
+
+3. Répétez la démarche pour des documents
+-----------------------------------------
+
+select distinct ?p where {
+?doc a foaf:Document ;
+?p ?pers .
+?pers a foaf:Person
+}
+
+p
+http://purl.org/dc/terms/subject
+
+
+La nature de la relation trouvée est qu'un document a pour relation un sujet.
+
+select ?doc where {?doc a foaf:Document ; ?p <http://data.bnf.fr/ark:/12148/cb11896834h#about>}
+
+doc
+http://www.pizan.lib.ed.ac.uk/
+
+
+4. Interroger data.bnf en Python
+--------------------------------
+
+Quel résultat obtenez-vous dans la réponse à la requête ?
+
+J'obtiens la réponse 200
+
+url = "http://data.bnf.fr/sparql?default-graph-uri=&query=select+%28count+%28distinct+%3Fp%29+as+%3Fc%29+where+%7B%0D%0A%3Fh+a+foaf%3APerson%3B+%3Fp+%5B+%5D%0D%0A%7D&format=application%2Fsparql-results%2Bjson&timeout=0&should-sponge=&debug=on"
+import urllib.request, json 
+with urllib.request.urlopen(url) as url:
+    data = json.loads(url.read().decode())
+    print(data)
+
+data contient le JSON de la requête.
+
+{'head': {'link': [], 'vars': ['c']}, 'results': {'distinct': False, 'ordered': True, 'bindings': [{'c': {'type': 'typed-literal', 'datatype': 'http://www.w3.org/2001/XMLSchema#integer', 'value': '26'}}]}}
+
+
+
+
+
+
+
